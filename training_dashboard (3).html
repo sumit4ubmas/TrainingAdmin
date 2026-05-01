@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Training Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#f0f2f5; --surface:#fff; --surface2:#f8f9fb; --border:#e2e6ed;
+      --text:#111827; --muted:#6b7280; --muted2:#9ca3af;
+      --accent:#16a34a; --accent-l:#dcfce7;
+      --accent2:#d97706; --accent2-l:#fef3c7;
+      --danger:#dc2626; --danger-l:#fee2e2;
+      --blue:#2563eb; --blue-l:#dbeafe;
+      --purple:#7c3aed; --purple-l:#ede9fe;
+      --sh1:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+      --sh2:0 4px 14px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* PIN */
+    #pinScreen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff 0%,#fafbff 50%,#f0fdf4 100%)}
+    .pin-card{background:#fff;border-radius:24px;padding:44px 38px 36px;box-shadow:0 24px 60px rgba(0,0,0,.12),0 4px 16px rgba(0,0,0,.06);text-align:center;width:330px;animation:fadeUp .5s ease both}
+    .pin-mark{width:54px;height:54px;border-radius:15px;background:linear-gradient(135deg,#16a34a,#22c55e);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;box-shadow:0 6px 18px rgba(22,163,74,.28)}
+    .pin-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
+    .pin-sub{color:var(--muted);font-size:13px;margin-bottom:30px}
+    .pin-display{display:flex;justify-content:center;gap:14px;margin-bottom:26px}
+    .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .18s ease}
+    .pin-dot.filled{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
+    .pin-dot.error{border-color:var(--danger);background:var(--danger);animation:shake .4s ease}
+    .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .num-btn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;padding:15px;cursor:pointer;transition:all .12s ease}
+    .num-btn:hover{background:#ecfdf5;border-color:#86efac;color:var(--accent)}
+    .num-btn:active{transform:scale(.95)}
+    .num-btn.zero{grid-column:2}
+    .del-btn{background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:16px;padding:15px;cursor:pointer;transition:all .12s}
+    .del-btn:hover{background:var(--danger-l);border-color:#fca5a5;color:var(--danger)}
+    .pin-error{color:var(--danger);font-size:12px;height:18px;font-weight:500}
+
+    /* DASHBOARD */
+    #dashboard{display:none;min-height:100vh}
+    #dashboard.visible{display:block;animation:fadeIn .4s ease}
+    .header{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--sh1)}
+    .header-brand{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:17px;display:flex;align-items:center;gap:10px}
+    .brand-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#16a34a,#22c55e);display:flex;align-items:center;justify-content:center;font-size:16px}
+    .header-right{display:flex;align-items:center;gap:10px}
+    .live-badge{display:flex;align-items:center;gap:5px;background:var(--accent-l);border:1px solid #bbf7d0;border-radius:20px;padding:5px 12px;font-size:12px;color:var(--accent);font-weight:600}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+    .lock-btn{background:#fff;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;display:flex;align-items:center;gap:5px}
+    .lock-btn:hover{color:var(--text);border-color:#d1d5db;background:var(--surface2)}
+    .main{padding:28px 32px;max-width:1440px;margin:0 auto}
+
+    /* KPI */
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+    .kpi-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 22px;box-shadow:var(--sh1);transition:box-shadow .2s,transform .2s;position:relative;overflow:hidden}
+    .kpi-card:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+    .kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 16px 16px}
+    .kpi-card.blue::after{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+    .kpi-card.purple::after{background:linear-gradient(90deg,var(--purple),#a78bfa)}
+    .kpi-card.green::after{background:linear-gradient(90deg,var(--accent),#4ade80)}
+    .kpi-card.red::after{background:linear-gradient(90deg,var(--danger),#f87171)}
+    .kpi-card.amber::after{background:linear-gradient(90deg,var(--accent2),#fbbf24)}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+    .kpi-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .kpi-card.blue   .kpi-ico{background:var(--blue-l)}
+    .kpi-card.purple .kpi-ico{background:var(--purple-l)}
+    .kpi-card.green  .kpi-ico{background:var(--accent-l)}
+    .kpi-card.red    .kpi-ico{background:var(--danger-l)}
+    .kpi-card.amber  .kpi-ico{background:var(--accent2-l)}
+    .kpi-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--text)}
+
+    /* TOOLBAR */
+    .toolbar{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;box-shadow:var(--sh1)}
+    .search-wrap{position:relative;flex:1;min-width:220px}
+    .s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:14px;pointer-events:none}
+    .search-wrap input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 12px 9px 36px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+    .search-wrap input:focus{border-color:#86efac;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+    .search-wrap input::placeholder{color:var(--muted2)}
+    select{background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 12px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;transition:border-color .2s,box-shadow .2s;min-width:148px}
+    select:focus{border-color:#86efac;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+    .refresh-btn{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:9px;color:#fff;padding:9px 18px;font-size:13.5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(22,163,74,.22)}
+    .refresh-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(22,163,74,.3)}
+    .refresh-btn:disabled{opacity:.6;cursor:default;transform:none}
+    .count-badge{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--muted);white-space:nowrap}
+    .count-badge b{color:var(--text)}
+
+    /* TABLE */
+    .table-wrap{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--sh1)}
+    .table-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:1100px}
+    thead tr{background:#f8f9fb}
+    th{color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+    th:hover{color:var(--text)}
+    th .si{margin-left:4px;opacity:.3;font-size:10px}
+    th.sort-asc .si,th.sort-desc .si{opacity:1;color:var(--accent)}
+    td{padding:13px 16px;border-bottom:1px solid #f3f4f6;font-size:13.5px;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:#fafbff}
+    .td-name{font-weight:600}
+    .td-email{color:var(--muted);font-size:12px}
+    .td-trn,.td-quiz{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:12.5px}
+    .att-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif}
+    .score-wrap{display:flex;align-items:center;gap:8px}
+    .score-bar{width:68px;height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden;flex-shrink:0}
+    .score-fill{height:100%;border-radius:3px}
+    .score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;min-width:36px}
+    .chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.02em;white-space:nowrap}
+    .chip-pass{background:var(--accent-l);color:var(--accent);border:1px solid #bbf7d0}
+    .chip-fail{background:var(--danger-l);color:var(--danger);border:1px solid #fca5a5}
+    .chip-started{background:var(--accent2-l);color:var(--accent2);border:1px solid #fcd34d}
+    .td-ts{color:var(--muted);font-size:12px;white-space:nowrap}
+    .state-row td{text-align:center;padding:48px;color:var(--muted);line-height:1.8}
+    .spinner{display:inline-block;width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
+    .err-box{background:var(--danger-l);border:1px solid #fca5a5;border-radius:12px;padding:16px 20px;display:inline-block;text-align:left;max-width:480px}
+    .err-box strong{color:var(--danger);display:block;margin-bottom:6px;font-size:14px}
+    .err-box p{font-size:13px;color:#7f1d1d;line-height:1.6}
+    .err-box code{background:#fecaca;border-radius:4px;padding:1px 5px;font-size:12px}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);background:var(--surface2)}
+    .page-btns{display:flex;gap:5px}
+    .page-btn{background:#fff;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:5px 11px;font-size:12px;cursor:pointer;transition:all .12s;font-family:'Inter',sans-serif}
+    .page-btn:hover:not(:disabled){color:var(--text);border-color:#d1d5db}
+    .page-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+    .page-btn:disabled{opacity:.35;cursor:default}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideOut{to{opacity:0;transform:scale(.96)}}
+    @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.main{padding:16px}.header{padding:0 16px}}
+  </style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pinScreen">
+  <div class="pin-card">
+    <div class="pin-mark">🎓</div>
+    <div class="pin-title">Admin Dashboard</div>
+    <p class="pin-sub">Enter your PIN to access training data</p>
+    <div class="pin-display">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="pressPin('1')">1</button>
+      <button class="num-btn" onclick="pressPin('2')">2</button>
+      <button class="num-btn" onclick="pressPin('3')">3</button>
+      <button class="num-btn" onclick="pressPin('4')">4</button>
+      <button class="num-btn" onclick="pressPin('5')">5</button>
+      <button class="num-btn" onclick="pressPin('6')">6</button>
+      <button class="num-btn" onclick="pressPin('7')">7</button>
+      <button class="num-btn" onclick="pressPin('8')">8</button>
+      <button class="num-btn" onclick="pressPin('9')">9</button>
+      <button class="num-btn zero" onclick="pressPin('0')">0</button>
+      <button class="del-btn" onclick="deletePin()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError">&nbsp;</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="header">
+    <div class="header-brand"><div class="brand-icon">🎓</div>Training Admin</div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> Live Data</div>
+      <button class="lock-btn" onclick="lockDashboard()">🔒 Lock</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-top"><div class="kpi-label">Total Attempts</div><div class="kpi-ico">📋</div></div>
+        <div class="kpi-value" id="totalAttempts">—</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-top"><div class="kpi-label">Unique Users</div><div class="kpi-ico">👥</div></div>
+        <div class="kpi-value" id="uniqueUsers">—</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-top"><div class="kpi-label">Passed</div><div class="kpi-ico">✅</div></div>
+        <div class="kpi-value" id="passedAttempts">—</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-top"><div class="kpi-label">Failed</div><div class="kpi-ico">❌</div></div>
+        <div class="kpi-value" id="failedAttempts">—</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-top"><div class="kpi-label">Pass Rate</div><div class="kpi-ico">📈</div></div>
+        <div class="kpi-value" id="passRate">—</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="searchBox" placeholder="Search by name, email or training…" />
+      </div>
+      <select id="resultFilter">
+        <option value="">All Results</option>
+        <option value="Pass">✅ Pass</option>
+        <option value="Fail">❌ Fail</option>
+        <option value="Started">⏳ Started</option>
+      </select>
+      <select id="trainingFilter"><option value="">All Trainings</option></select>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">↻ Refresh</button>
+      <div class="count-badge">Showing <b id="rowCount">0</b> records</div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <colgroup>
+            <col style="width:145px">
+            <col style="width:110px">
+            <col style="width:180px">
+            <col style="width:200px">
+            <col style="width:175px">
+            <col style="width:80px">
+            <col style="width:90px">
+            <col style="width:80px">
+            <col style="width:130px">
+            <col style="width:100px">
+          </colgroup>
+          <thead><tr>
+            <th onclick="sortBy(this,'timestamp')">Timestamp<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'name')">Name<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'email')">Email<span class="si">↕</span></th>
+            <th>Training</th><th>Quiz</th>
+            <th onclick="sortBy(this,'attemptNo')">Attempt<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'totalQuestions')">Questions<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'correctAnswers')">Correct<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'scorePercent')">Score<span class="si">↕</span></th>
+            <th onclick="sortBy(this,'result')">Result<span class="si">↕</span></th>
+          </tr></thead>
+          <tbody id="resultsBody">
+            <tr class="state-row"><td colspan="10"><div class="spinner"></div><br>Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div id="pageInfo">Page 1 of 1</div>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE    = "https://script.google.com/macros/s/AKfycbznUkd-er7518oClTj1mqDLvsAcgybvCzurByPdzmbExhMcvIPJdee2wcjjJPuXcO1W/exec";
+  const CORRECT_PIN = "3191";
+  const PAGE_SIZE   = 20;
+
+  let allRows=[], filteredRows=[], currentPage=1;
+  let sortCol='timestamp', sortDir='desc', pinInput='';
+
+  /* ── PIN ──────────────────────────── */
+  function pressPin(d){ if(pinInput.length>=4)return; pinInput+=d; updateDots(); if(pinInput.length===4)setTimeout(checkPin,80); }
+  function deletePin(){ pinInput=pinInput.slice(0,-1); document.getElementById('pinError').innerHTML='&nbsp;'; updateDots(); }
+  function updateDots(err){
+    for(let i=0;i<4;i++){
+      const el=document.getElementById('d'+i);
+      el.className='pin-dot'+(err?' error':i<pinInput.length?' filled':'');
+    }
+  }
+  function checkPin(){
+    if(pinInput===CORRECT_PIN){
+      const ps=document.getElementById('pinScreen');
+      ps.style.animation='slideOut .35s ease forwards';
+      setTimeout(()=>{ ps.style.display='none'; document.getElementById('dashboard').classList.add('visible'); loadDashboard(); },350);
+    } else {
+      updateDots(true);
+      document.getElementById('pinError').textContent='Incorrect PIN — try again';
+      setTimeout(()=>{ pinInput=''; updateDots(); document.getElementById('pinError').innerHTML='&nbsp;'; },900);
+    }
+  }
+  function lockDashboard(){
+    pinInput=''; updateDots(); document.getElementById('pinError').innerHTML='&nbsp;';
+    document.getElementById('dashboard').classList.remove('visible');
+    const ps=document.getElementById('pinScreen'); ps.style.display='flex'; ps.style.animation='';
+  }
+  document.addEventListener('keydown',e=>{
+    if(document.getElementById('pinScreen').style.display!=='none'){
+      if(/^[0-9]$/.test(e.key)) pressPin(e.key);
+      else if(e.key==='Backspace') deletePin();
+    }
+  });
+
+  /* ── DATA ─────────────────────────── */
+  /*
+    Google Apps Script (GAS) deployed as a Web App redirects the initial
+    request to a one-time URL. fetch() follows redirects but the final
+    response has no CORS headers, which causes the "failed to fetch" error.
+
+    Fix: we append ?action=getData (or any param) — GAS returns JSON with
+    ContentService and includes the CORS headers when deployed as "Anyone".
+
+    If that also fails (e.g. opened from file://) we fall back to JSONP.
+  */
+  async function loadDashboard(){
+    showState('<div class="spinner"></div><br>Fetching live data…');
+    updateKPIs(null);
+    const btn=document.getElementById('refreshBtn');
+    btn.disabled=true;
+
+    try {
+      // Primary: fetch with redirect follow (works when served over http/https)
+      const res = await fetch(API_BASE, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: { 'Accept': 'application/json' }
+      });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      btn.disabled=false;
+      handleData(data);
+    } catch(e) {
+      // Fallback: JSONP (works when opened as file://)
+      jsonpFetch(btn);
+    }
+  }
+
+  function jsonpFetch(btn){
+    const cbName='_cb'+Date.now();
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup(); btn.disabled=false;
+      showErrBox(
+        'Unable to load data',
+        `Make sure this file is opened in a browser (not a sandboxed preview).<br>
+         Also confirm your Apps Script is deployed with access set to <code>Anyone</code>.`
+      );
+    },14000);
+    window[cbName]=function(data){ clearTimeout(timer); cleanup(); btn.disabled=false; handleData(data); };
+    script.onerror=function(){
+      clearTimeout(timer); cleanup(); btn.disabled=false;
+      showErrBox(
+        'Could not reach Apps Script',
+        `Open this HTML file directly in Chrome/Edge/Firefox.<br>
+         The Claude preview sandbox blocks outbound script requests.`
+      );
+    };
+    script.src=API_BASE+'?callback='+cbName+'&_='+Date.now();
+    document.head.appendChild(script);
+    function cleanup(){ delete window[cbName]; if(script.parentNode)script.parentNode.removeChild(script); }
+  }
+
+  function handleData(data){
+    if(!data||data.status!=='success'){
+      showErrBox('Server error', esc((data&&data.message)||'Unexpected response.')); return;
+    }
+    allRows=data.rows||[];
+    const trainings=[...new Set(allRows.map(r=>r.trainingName).filter(Boolean))].sort();
+    const tf=document.getElementById('trainingFilter');
+    tf.innerHTML='<option value="">All Trainings</option>'+
+      trainings.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    updateKPIs(data.summary);
+    currentPage=1; applyFilters();
+  }
+
+  function updateKPIs(s){
+    const na='—';
+    document.getElementById('totalAttempts').textContent = s?(s.totalAttempts??na):na;
+    document.getElementById('uniqueUsers').textContent   = s?(s.uniqueUsers??na):na;
+    document.getElementById('passedAttempts').textContent= s?(s.passedAttempts??na):na;
+    document.getElementById('failedAttempts').textContent= s?(s.failedAttempts??na):na;
+    document.getElementById('passRate').textContent      = s?(s.passRate!=null?s.passRate+'%':na):na;
+  }
+
+  function showState(html){
+    document.getElementById('resultsBody').innerHTML=`<tr class="state-row"><td colspan="10">${html}</td></tr>`;
+    document.getElementById('rowCount').textContent='0';
+  }
+
+  function showErrBox(title, detail){
+    showState(`<div class="err-box"><strong>⚠️ ${esc(title)}</strong><p>${detail}</p></div>`);
+  }
+
+  /* ── FILTERS / SORT ───────────────── */
+  function applyFilters(){
+    const q=document.getElementById('searchBox').value.trim().toLowerCase();
+    const rf=document.getElementById('resultFilter').value;
+    const tf=document.getElementById('trainingFilter').value;
+    filteredRows=allRows.filter(r=>
+      (!q||[r.name,r.email,r.trainingName,r.quizName].some(v=>String(v||'').toLowerCase().includes(q)))&&
+      (!rf||String(r.result||'')===rf)&&
+      (!tf||String(r.trainingName||'')===tf)
+    );
+    doSort(); currentPage=1; renderRows();
+  }
+
+  function doSort(){
+    filteredRows.sort((a,b)=>{
+      let va=a[sortCol],vb=b[sortCol];
+      if(sortCol==='timestamp'){va=new Date(va||0);vb=new Date(vb||0);}
+      else if(['attemptNo','totalQuestions','correctAnswers','scorePercent'].includes(sortCol)){va=+va||0;vb=+vb||0;}
+      else{va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase();}
+      return(va<vb?-1:va>vb?1:0)*(sortDir==='asc'?1:-1);
+    });
+  }
+
+  function sortBy(th,col){
+    if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';
+    else{sortCol=col;sortDir='desc';}
+    document.querySelectorAll('th').forEach(el=>el.classList.remove('sort-asc','sort-desc'));
+    th.classList.add('sort-'+sortDir);
+    doSort(); renderRows();
+  }
+
+  /* ── RENDER ───────────────────────── */
+  function renderRows(){
+    const total=filteredRows.length;
+    const pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+    const page=filteredRows.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+    document.getElementById('rowCount').textContent=total;
+    document.getElementById('pageInfo').textContent=`Page ${currentPage} of ${pages}`;
+    const body=document.getElementById('resultsBody');
+    if(!page.length){
+      body.innerHTML=`<tr class="state-row"><td colspan="10">No records match your filters.</td></tr>`;
+      renderPager(pages); return;
+    }
+    body.innerHTML=page.map(r=>{
+      const score=parseFloat(r.scorePercent)||0;
+      const sc=score>=80?'var(--accent)':score>=60?'var(--accent2)':'var(--danger)';
+      const res=String(r.result||'').trim();
+      const chip=res==='Pass'?'chip-pass':res==='Started'?'chip-started':'chip-fail';
+      const icon=res==='Pass'?'✓':res==='Started'?'⏳':'✗';
+      return `<tr>
+        <td class="td-ts">${esc(fmtDate(r.timestamp))}</td>
+        <td class="td-name">${esc(r.name||'')}</td>
+        <td class="td-email">${esc(r.email||'')}</td>
+        <td class="td-trn" title="${esc(r.trainingName||'')}">${esc(r.trainingName||'')}</td>
+        <td class="td-quiz" title="${esc(r.quizName||'')}">${esc(r.quizName||'')}</td>
+        <td><span class="att-badge">${esc(String(r.attemptNo||''))}</span></td>
+        <td style="color:var(--muted);font-weight:600">${esc(String(r.totalQuestions||0))}</td>
+        <td style="font-weight:600">${esc(String(r.correctAnswers||0))}</td>
+        <td><div class="score-wrap">
+          <div class="score-bar"><div class="score-fill" style="width:${score}%;background:${sc}"></div></div>
+          <span class="score-num" style="color:${sc}">${score}%</span>
+        </div></td>
+        <td><span class="chip ${chip}">${icon} ${esc(res)}</span></td>
+      </tr>`;
+    }).join('');
+    renderPager(pages);
+  }
+
+  function renderPager(total){
+    const pb=document.getElementById('pageBtns');
+    if(total<=1){pb.innerHTML='';return;}
+    let h=`<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Prev</button>`;
+    for(let i=1;i<=total;i++){
+      if(total>7&&Math.abs(i-currentPage)>2&&i!==1&&i!==total){
+        if(i===2||i===total-1)h+=`<span style="color:var(--muted2);padding:0 4px">…</span>`;
+        continue;
+      }
+      h+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    h+=`<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>Next →</button>`;
+    pb.innerHTML=h;
+  }
+
+  function goPage(n){
+    const t=Math.ceil(filteredRows.length/PAGE_SIZE);
+    if(n<1||n>t)return;
+    currentPage=n; renderRows();
+    document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function fmtDate(v){
+    if(!v)return'';
+    const d=new Date(v);
+    return isNaN(d)?String(v):
+      d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+
+      d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  }
+  function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
+
+  document.getElementById('searchBox').addEventListener('input',()=>{currentPage=1;applyFilters();});
+  document.getElementById('resultFilter').addEventListener('change',()=>{currentPage=1;applyFilters();});
+  document.getElementById('trainingFilter').addEventListener('change',()=>{currentPage=1;applyFilters();});
+</script>
+</body>
+</html>
